@@ -6,6 +6,7 @@ program Practica1
     integer, dimension(100) :: cantidades
     real, dimension(100) :: precios
     character(len=15), dimension(100) :: ubicaciones
+    character(len=1) :: tab = achar(9)
     integer :: total_items = 0
 
 
@@ -100,7 +101,8 @@ contains
             return !* Vuelve al menú
         end if
 
-        print *, 'Nombre' // " " // 'Cantidad' // " " // 'Precio' // " " // 'Ubicacion'
+        print *, 'Nombre' //tab// " " //tab// 'Cantidad' //tab// " " //tab// 'Precio' //tab// " " //tab// 'Ubicacion'
+        print *, '-----------------------------------------------------------------'
         i = 0
 
         do
@@ -162,12 +164,15 @@ contains
 
         end do
 
+        total_items = i
+
+        close(io) !* Cierra el archivo
         print *, ''
         print *, 'Carga exitosa!'
         print *, '____________________________________________'
         print *, ''
 
-        
+
         call mostrarMenu()
 
 
