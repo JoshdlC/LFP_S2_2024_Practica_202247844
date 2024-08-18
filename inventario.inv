@@ -1,0 +1,11 @@
+crear_equipo Escritorios;75;100.75;BodegaC 
+crear_equipo Impresoras;30;1450.00;BodegaD
+crear_equipo Sillas;200;75.50;BodegaE
+crear_equipo Proyectores;15;1200.00;BodegaF
+crear_equipo Mesas;60;150.00;BodegaF
+crear_equipo Telefonos;100;80.00;BodegaD
+crear_equipo Monitores;45;320.00;BodegaC
+crear_equipo Teclados;120;25.00;BodegaE
+crear_equipo Ratones;150;15.75;BodegaB
+crear_equipo Camaras;25;500.00;BodegaA
+crear_equipo Tablets;40;350.00;BodegaB
