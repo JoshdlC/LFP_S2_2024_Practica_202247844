@@ -52,6 +52,7 @@ contains
                     print *, ''
                     print *, 'Crear informe de inventario'
                     print *, ''
+                    call crearInforme()
                 case(4)
                     print *, ''
                     call mostrarInfoEstudiante()
@@ -76,7 +77,7 @@ contains
     end subroutine mostrarInfoEstudiante
 
 
-    !* subrutina para cargar el inventario inicial
+    !! subrutina para cargar el inventario inicial
     subroutine cargarInv()
 
         implicit none
@@ -179,13 +180,13 @@ contains
 
     end subroutine cargarInv
         
-    !* subrutina para cargar las instrucciones de movimientos
+    !! subrutina para cargar las instrucciones de movimientos
     subroutine cargarInstrucciones()
-        integer :: io, ios, cantidad
-        real :: precio
-        character(len=15) :: nombre, ubicacion, cantidad_str, precio_str
+        integer :: io, ios, cantidad, i, j
+        character(len=15) :: nombre, ubicacion, cantidad_str
         character(len=100) :: linea
         character(len=20) :: temporal
+        integer :: pos_punto
 
         print *, '---------------------------'
         print *, 'Cargando instrucciones...'
@@ -201,22 +202,139 @@ contains
             return !* Vuelve al menú
         end if
 
+        print *, '-----------------------------------------------------------------'
+
         do 
             read (io, *, iostat=ios) linea
-            if (ios /= 0) then !* Si hay error o es fin del archivo, sale del bucle
-                print *, ''
-                print *, 'Carga exitosa!'
-                print *, ''
-                call mostrarMenu()
+            if (ios /= 0) return !* Si hay error o es fin del archivo, sale del bucle
+            
+            !* Buscar primeras instrucciones de lineas
+            read (linea(1:12), '(A12)', iostat=ios) temporal
+            if (ios /= 0) then
+                print *, "Error: Error al leer la palabra reservada."
+                exit
+            end if
+
+            !* Verificar si la palabra reservada es correcta, sino sale de la subrutina
+            if (temporal /= "agregar_stock" .or. temporal /= "eliminar_equipo") then
+                print *, "Error: Formato de archivo incorrecto. Se esperaba alguna de las palbras reservadas."
+                exit
+            end if
+
+            if (temporal == "agregar_stock") then !? si la linea va a agregar 
+                linea = adjustl(linea(14:)) !* elimina agregar_stock
+                pos_punto = index(linea, ';') !* encuentra el primer punto y coma
+                
+                if(pos_punto > 0) then
+                    nombre = trim(linea(1:pos_punto-1)) !* extrae el nombre
+                    !* busca el objeto a agregar
+                    do i = 1, total_items
+                        if (nombres(i) == nombre) then
+                            
+                            linea = adjustl(linea(pos_punto+1:)) !* elimina el nombre y ajusta la línea
+                            read (linea, *) cantidad !* lee la cantidad
+                            cantidades(i) = cantidades(i) + cantidad !* suma la cantidad
+                        else 
+                            !* no se encontro el objeto
+                            print *, ''
+                            print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                            print *, "Error: No se encontro el objeto a agregar."
+                            print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                            print *, ''
+                            call mostrarMenu()
+                        end if
+                    end do
+                end if
+
+            else if (temporal == "eliminar_equipo") then !? si la linea va a eliminar
+                linea = adjustl(linea(16:))
+                pos_punto = index(linea, ';')
+                
+                if (pos_punto > 0) then
+                    nombre = trim(linea(1:pos_punto-1))
+                    
+                    
+                    !* busca el objeto a eliminar
+                    do i = 1, total_items
+                        if (nombres(i) == nombre) then
+
+                            do j=1, total_items-1
+                                nombres(j) = nombres(j+1)
+                                cantidades(j) = cantidades(j+1)
+                                precios(j) = precios(j+1)
+                                ubicaciones(j) = ubicaciones(j+1)
+                            end do
+
+                            !* se reduce la cantidad total de items
+                            total_items = total_items - 1
+                        else 
+                            !* no se encontro el objeto
+                            print *, ''
+                            print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                            print *, "Error: No se encontro el objeto a eliminar."
+                            print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                            print *, ''
+                            call mostrarMenu()
+                        end if
+                    end do
+                    
+                    !! si no se encuentra el objeto
+                    if (i > total_items) then
+                        print *, ''
+                        print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                        print *, "Error: No se encontro el objeto a eliminar."
+                        print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                        print *, ''
+                    end if
+                end if
             end if
         
-        
+        close(io) !* Cierra el archivo
         print *, 'Carga exitosa!'
         print *, ''
 
         end do
 
+        call mostrarMenu()
     end subroutine cargarInstrucciones
+
+    !! subrutina para crear informe.txt
+    subroutine crearInforme()
+        implicit none
+        integer :: io, ios, cantidad, i
+        real :: precio
+        character(len=15) :: cantidad_str, precioUni_str, precioTotal_str
+
+        print *, '------------------'
+        print *, 'Creando informe...'
+        print *, '------------------'
+
+        !* abrir un archivo .txt para escribir el informe
+        open (newunit = io, file = "informe.txt", status="replace", iostat=ios)
+
+        !* verifica si se puede abrir el archivo
+        if (ios /= 0) then 
+            print *, "Error: No se puede abrir el archivo 'informe.txt'."
+            return !* Vuelve al menú
+        end if
+
+        !* escribe el encabezado
+        write (io, '(A)') 'Informe de inventario:'
+        write (io, '(A)') ''
+        write (io, '(A)') 'Nombre' //tab// " " //tab// 'Cantidad' //tab// " " //tab// 'Precio Unitario' //tab// " " //tab// 'Precio total' //tab// " "//tab// 'Ubicacion'
+        write (io, '(A)') '-------------------------------------------------------------------------------------------'
+        
+        do i = 1, total_items
+            write (cantidad_str, '(I3)') cantidades(i)
+            write(precioUni_str, '(F10.2)') precios(i)
+            write(precioTotal_str, '(F10.2)') cantidades(i) * precios(i)
+            write (io, '(A)') trim(nombres(i)) //tab// " " //tab// cantidad_str //tab// " " //tab// precioUni_str //tab// " " //tab// precioTotal_str //tab// " " //tab// ubicaciones(i)
+        end do
+
+        close(io) !* Cierra el archivo
+        print *, ''
+        call mostrarMenu()
+    end subroutine crearInforme
 end program Practica1
 
  

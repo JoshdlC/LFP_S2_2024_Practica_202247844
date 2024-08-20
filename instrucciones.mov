@@ -1,4 +1,4 @@
-agregar_stock Lapices;50;BodegaA 
+agregar_stock Perros;50;BodegaA 
 eliminar_equipo Computadoras;20;BodegaB 
 eliminar_equipo Impresoras;5;BodegaD
 eliminar_equipo Sillas;35;BodegaE
