@@ -2,10 +2,10 @@ program Practica1
     implicit none
     !* Declaracion de variables
     
-    character(len=15), dimension(100) :: nombres
-    integer, dimension(100) :: cantidades
-    real, dimension(100) :: precios
-    character(len=15), dimension(100) :: ubicaciones
+    character(len=20), dimension(200) :: nombres
+    integer, dimension(200) :: cantidades
+    real, dimension(200) :: precios
+    character(len=20), dimension(200) :: ubicaciones
     character(len=1) :: tab = achar(9)
     integer :: total_items = 0
 
@@ -46,7 +46,7 @@ contains
                     print *, ''
                     !print *, 'Cargar instrucciones de movimientos'
                     !?nombre del archivo instrucciones.mov
-                    !call cargarInstrucciones()
+                    call cargarInstrucciones()
                     print *, ''
                 case(3)
                     print *, ''
@@ -182,17 +182,18 @@ contains
         
     !! subrutina para cargar las instrucciones de movimientos
     subroutine cargarInstrucciones()
-        integer :: io, ios, cantidad, i, j
-        character(len=15) :: nombre, ubicacion, cantidad_str
-        character(len=100) :: linea
+        integer :: io, ios, cantidad, i, j, find
+        character(len=150) :: linea, linea_original
         character(len=20) :: temporal
-        integer :: pos_punto
-
+        character(len=10) :: ubicacion
+        integer :: pos_punto1, pos_punto2, cantidad_total
+        character(len=15) :: cantidad_str, nombre
+    
         print *, '---------------------------'
         print *, 'Cargando instrucciones...'
         print *, '---------------------------'
         print *, ''
-        !! Logica para cargar el inventario inicial de archivo instruccioens.mov
+        !! Logica para cargar el inventario inicial de archivo instrucciones.mov
         !* abre archivo de instrucciones
         open (newunit = io, file = "instrucciones.mov", status="old", iostat=ios)
         
@@ -201,102 +202,198 @@ contains
             print *, "Error: No se puede abrir el archivo 'instrucciones.mov'. Verifique que el archivo existe."
             return !* Vuelve al menú
         end if
-
-        print *, '-----------------------------------------------------------------'
-
+    
+        print *, '--------------------------------------------------------------------------------------'
+    
         do 
-            read (io, *, iostat=ios) linea
-            if (ios /= 0) return !* Si hay error o es fin del archivo, sale del bucle
-            
+            read (io, '(A)', iostat=ios) linea_original !* lee una línea del archivo io abierto
+            if (ios /= 0) then 
+                exit !* Sale del bucle si hay error o es fin del archivo
+            end if
+
             !* Buscar primeras instrucciones de lineas
-            read (linea(1:12), '(A12)', iostat=ios) temporal
-            if (ios /= 0) then
-                print *, "Error: Error al leer la palabra reservada."
-                exit
-            end if
+            !temporal = adjustl(linea(1:len_trim(linea)))
+            temporal = adjustl(linea_original)
 
-            !* Verificar si la palabra reservada es correcta, sino sale de la subrutina
-            if (temporal /= "agregar_stock" .or. temporal /= "eliminar_equipo") then
-                print *, "Error: Formato de archivo incorrecto. Se esperaba alguna de las palbras reservadas."
-                exit
-            end if
+            !* Encontrar el primer espacio para separar la palabra reservada
+            pos_punto1 = index(temporal, ' ')
+            if (pos_punto1 > 0) then
+                temporal = trim(temporal(1:pos_punto1-1)) !* palabra reservada
+                print *, '|', pos_punto1, '|'
+                print *, 'Linea completa: ', linea_original
+                print *, ''
 
-            if (temporal == "agregar_stock") then !? si la linea va a agregar 
-                linea = adjustl(linea(14:)) !* elimina agregar_stock
-                pos_punto = index(linea, ';') !* encuentra el primer punto y coma
+                ! linea = trim(linea(1:pos_punto1)) !* resto de la línea
+                linea = trim(linea_original(pos_punto1+1:)) !* resto de la línea
+    
+                print *, 'Palabra reservada: ', temporal
+                print *, 'Resto de la linea: ', linea
                 
-                if(pos_punto > 0) then
-                    nombre = trim(linea(1:pos_punto-1)) !* extrae el nombre
-                    !* busca el objeto a agregar
-                    do i = 1, total_items
-                        if (nombres(i) == nombre) then
-                            
-                            linea = adjustl(linea(pos_punto+1:)) !* elimina el nombre y ajusta la línea
-                            read (linea, *) cantidad !* lee la cantidad
-                            cantidades(i) = cantidades(i) + cantidad !* suma la cantidad
-                        else 
-                            !* no se encontro el objeto
-                            print *, ''
-                            print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-                            print *, "Error: No se encontro el objeto a agregar."
-                            print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-                            print *, ''
-                            call mostrarMenu()
-                        end if
-                    end do
-                end if
+                !* Verificar si la palabra reservada es correcta
+                if (temporal == "agregar_stock") then
+                    print *, '|'
+                    print *, '|', linea, '|'
+                    pos_punto1 = index(linea, ';')
+                    print *, '|pos', pos_punto1, '|'
+                    if (pos_punto1 > 0) then
+                        nombre = trim(linea(1:pos_punto1-1)) !* extrae el nombre
+                        print *, '|', nombre, '|'
+                        linea = trim(linea(pos_punto1+1:))
 
-            else if (temporal == "eliminar_equipo") then !? si la linea va a eliminar
-                linea = adjustl(linea(16:))
-                pos_punto = index(linea, ';')
-                
-                if (pos_punto > 0) then
-                    nombre = trim(linea(1:pos_punto-1))
-                    
-                    
-                    !* busca el objeto a eliminar
-                    do i = 1, total_items
-                        if (nombres(i) == nombre) then
+                        print *, '|', linea, '|'
 
-                            do j=1, total_items-1
-                                nombres(j) = nombres(j+1)
-                                cantidades(j) = cantidades(j+1)
-                                precios(j) = precios(j+1)
-                                ubicaciones(j) = ubicaciones(j+1)
+                        pos_punto2 = index(linea, ';')
+                        print *, '|pos', pos_punto2, '|'
+                        if (pos_punto2 > 0) then
+                            cantidad_str = trim(linea(1:pos_punto2-1))
+                            print *, '|', cantidad_str, '|'
+                            ubicacion = trim(linea(pos_punto2+1:))
+                            print *, '|', ubicacion, '|'
+    
+                            read(cantidad_str, *) cantidad !* lee la cantidad
+    
+                            !* Verificar ubicación
+                            find = 0
+                            print *, ''
+                            print *, '|', total_items , '|'
+                            ! do i = 1, total_items
+                            !     if (nombre == nombres(i)  ) then
+                            !         .and. ubicaciones(i) == ubicacion
+                            !         find = 1
+                            !         if (ubicaciones(i) == ubicacion) then
+                            !             cantidades(i) = cantidades(i) + cantidad
+                            !         else
+                                    
+                            !             print *, ''
+                            !             print *, '|', nombre
+                            !             print *, ''
+                            !             print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                            !             print *, "Error: La ubicacion no coincide con la del equipo."
+                            !             print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                            !             print *, ''
+                            !             call mostrarMenu()
+                            !         end if
+                            !     else 
+                            !         print *, '|', nombre
+                            !         print *, '|', i, '|'
+                            !         print *, ''
+                            !         print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                            !         print *, "Error: No se encontro el equipo a agregar."
+                            !         print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                            !         print *, ''
+                            !         call mostrarMenu()
+                            !     end if
+                                
+                            ! end do
+                            do i = 1, total_items
+                                if (nombre == nombres(i)) then
+                                    if (ubicaciones(i) == ubicacion) then
+                                        cantidades(i) = cantidades(i) + cantidad
+                                        find = 1
+                                        exit !* Si se encuentra, no es necesario continuar buscando
+                                    else
+                                        print *, ''
+                                        print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                        print *, "Error: La ubicacion no coincide con la del equipo."
+                                        print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                        print *, ''
+                                        call mostrarMenu()
+                                    end if
+                                else 
+                                    print *, ''
+                                    print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                    print *, "Error: No se encontro el equipo a agregar."
+                                    print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                    print *, ''
+                                    call mostrarMenu()
+                                end if
                             end do
-
-                            !* se reduce la cantidad total de items
-                            total_items = total_items - 1
-                        else 
-                            !* no se encontro el objeto
-                            print *, ''
-                            print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-                            print *, "Error: No se encontro el objeto a eliminar."
-                            print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-                            print *, ''
-                            call mostrarMenu()
+                            if (find == 0) then
+                                print *, ''
+                                print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                print *, "Error: No se encontro el equipo a agregar."
+                                print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                print *, ''
+                                call mostrarMenu()
+                            end if
                         end if
-                    end do
-                    
-                    !! si no se encuentra el objeto
-                    if (i > total_items) then
-                        print *, ''
-                        print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-                        print *, "Error: No se encontro el objeto a eliminar."
-                        print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-                        print *, ''
                     end if
+    
+                else if (temporal == "eliminar_equipo") then
+                    pos_punto1 = index(linea, ';')
+                    if (pos_punto1 > 0) then
+                        nombre = trim(linea(1:pos_punto1-1))
+                        linea = trim(linea(pos_punto1+1:))
+                        pos_punto2 = index(linea, ';')
+                        if (pos_punto2 > 0) then
+                            cantidad_str = trim(linea(1:pos_punto2-1))
+                            ubicacion = trim(linea(pos_punto2+1:))
+    
+                            read(cantidad_str, *) cantidad !* lee la cantidad
+                            print *, cantidad_str
+    
+                            find = 0
+                            do i = 1, total_items
+                                if (nombres(i) == nombre) then
+                                    find = 1 !* bandera para indicar que se encontró el equipo
+                                    ! do j = i, total_items-1 !* Elimina el equipo, pero no debe ser asi
+                                    !     nombres(j) = nombres(j+1)
+                                    !     cantidades(j) = cantidades(j+1)
+                                    !     precios(j) = precios(j+1)
+                                    !     ubicaciones(j) = ubicaciones(j+1)
+                                    ! end do
+                                    if (ubicaciones(i) == ubicacion) then
+                                        cantidad_total = cantidades(i) - cantidad
+                                        print *, cantidad_total
+                                        if (cantidad_total < 0) then
+                                            print *, ''
+                                            print *, 'XXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxXX'
+                                            print *, "Error: No se puede eliminar mas de la cantidad existente."
+                                            print *, 'XXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxXX'
+                                            print *, ''
+                                            call mostrarMenu()
+                                        end if
+                                    else
+                                        print *, ''
+                                        print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                        print *, "Error: La ubicacion no coincide con la del equipo."
+                                        print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                        print *, ''
+                                        call mostrarMenu()
+                                    end if
+                                    ! cantidades(i) = cantidades(i) - cantidad
+                                    
+                                    total_items = total_items - 1
+                                    exit
+                                end if
+                            end do
+    
+                            if (find == 0) then
+                                print *, ''
+                                print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                print *, "Error: No se encontro el equipo a eliminar."
+                                print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                                print *, ''
+                                call mostrarMenu()
+                            end if
+                        end if
+                    end if
+                else
+                    print *, "Error: Formato de archivo incorrecto. Se esperaba 'agregar_stock' o 'eliminar_equipo'."
+                    print *, '--------------------------------------------------------------------------------------'
+                    print *, ''
+                    call mostrarMenu()
                 end if
             end if
-        
-        close(io) !* Cierra el archivo
+        end do
+        close(io)
         print *, 'Carga exitosa!'
         print *, ''
-
-        end do
-
         call mostrarMenu()
     end subroutine cargarInstrucciones
+    
+    
+
 
     !! subrutina para crear informe.txt
     subroutine crearInforme()
