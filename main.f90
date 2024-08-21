@@ -2,7 +2,7 @@ program Practica1
     implicit none
     !* Declaracion de variables
     
-    character(len=20), dimension(200) :: nombres
+    character(len=10), dimension(200) :: nombres
     integer, dimension(200) :: cantidades
     real, dimension(200) :: precios
     character(len=20), dimension(200) :: ubicaciones
@@ -129,7 +129,7 @@ contains
             !! Buscar la primera coma para extraer el nombre
             pos_coma = index(linea, ';') !* encuentra el primer punto y coma que sigue en la línea
             if (pos_coma > 0) then !* si se encontró el punto y coma
-                nombre = trim(linea(1:pos_coma-1)) !* extrae el nombre que está antes del punto y coma
+                nombre = trim(adjustl(linea(1:pos_coma-1))) !* extrae el nombre que está antes del punto y coma
                 linea = adjustl(linea(pos_coma+1:)) !* Elimina la parte ignorada y ajusta la línea
             end if
 
@@ -185,7 +185,7 @@ contains
         integer :: io, ios, cantidad, i, j, find
         character(len=150) :: linea, linea_original
         character(len=20) :: temporal
-        character(len=10) :: ubicacion
+        character(len=15) :: ubicacion
         integer :: pos_punto1, pos_punto2, cantidad_total
         character(len=15) :: cantidad_str, nombre
     
@@ -213,20 +213,20 @@ contains
 
             !* Buscar primeras instrucciones de lineas
             !temporal = adjustl(linea(1:len_trim(linea)))
-            temporal = adjustl(linea_original)
+            temporal = trim(adjustl(linea_original))
 
             !* Encontrar el primer espacio para separar la palabra reservada
             pos_punto1 = index(temporal, ' ')
             if (pos_punto1 > 0) then
                 temporal = trim(temporal(1:pos_punto1-1)) !* palabra reservada
-                print *, '|', pos_punto1, '|'
+                print '(A)',  '|', pos_punto1, '|'
                 print *, 'Linea completa: ', linea_original
                 print *, ''
 
                 ! linea = trim(linea(1:pos_punto1)) !* resto de la línea
                 linea = trim(linea_original(pos_punto1+1:)) !* resto de la línea
     
-                print *, 'Palabra reservada: ', temporal
+                print *, 'Palabra reservada: '//temporal//'|'
                 print *, 'Resto de la linea: ', linea
                 
                 !* Verificar si la palabra reservada es correcta
@@ -236,9 +236,9 @@ contains
                     pos_punto1 = index(linea, ';')
                     print *, '|pos', pos_punto1, '|'
                     if (pos_punto1 > 0) then
-                        nombre = trim(linea(1:pos_punto1-1)) !* extrae el nombre
+                        nombre = trim(adjustl(linea(1:pos_punto1-1))) !* extrae el nombre
                         print *, '|', nombre, '|'
-                        linea = trim(linea(pos_punto1+1:))
+                        linea = trim(adjustl(linea(pos_punto1+1:)))
 
                         print *, '|', linea, '|'
 
@@ -286,8 +286,11 @@ contains
                                 
                             ! end do
                             do i = 1, total_items
-                                if (nombre == nombres(i)) then
-                                    if (ubicaciones(i) == ubicacion) then
+                                if (trim(adjustl(nombre)) == trim(adjustl(nombres(i)))) then
+                                    print *, 'Comparando: "', nombre, '" con "', nombres(i), '"'
+
+                                    if (trim(ubicaciones(i)) == trim(ubicacion)) then
+                                        print *, 'Ubicacion a comparar: "', ubicacion, '" con "', ubicaciones(i), '"'
                                         cantidades(i) = cantidades(i) + cantidad
                                         find = 1
                                         exit !* Si se encuentra, no es necesario continuar buscando
@@ -299,13 +302,6 @@ contains
                                         print *, ''
                                         call mostrarMenu()
                                     end if
-                                else 
-                                    print *, ''
-                                    print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-                                    print *, "Error: No se encontro el equipo a agregar."
-                                    print *, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-                                    print *, ''
-                                    call mostrarMenu()
                                 end if
                             end do
                             if (find == 0) then
