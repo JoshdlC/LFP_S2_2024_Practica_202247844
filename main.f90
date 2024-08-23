@@ -14,7 +14,6 @@ program Practica1
     call mostrarMenu()
 
 contains 
-
     !! Subrutinas
     subroutine mostrarMenu()
         implicit none
@@ -75,7 +74,6 @@ contains
         print *, ''
         call mostrarMenu()
     end subroutine mostrarInfoEstudiante
-
 
     !! subrutina para cargar el inventario inicial
     subroutine cargarInv()
@@ -348,9 +346,6 @@ contains
         call mostrarMenu()
     end subroutine cargarInstrucciones
     
-    
-
-
     !! subrutina para crear informe.txt
     subroutine crearInforme()
         implicit none
@@ -400,7 +395,6 @@ contains
     !     character(len=256) :: temp_reservada
     !     integer :: pos_coma
     !     character(len=50) :: cantidad_str, precio_unitario_str
-
     !     !* Extraer el nombre y el poder del comando
     !     temp_reservada = reservada(len_trim(reservada)+2:) !* Remover la parte del comando ("create", "injury", o "power")
     !     pos_coma = index(temp_reservada, ",")
